@@ -1,0 +1,60 @@
+apply plugin: 'scala'
+
+apply from: 'https://github.com/valkolovos/gradle_cobertura/raw/master/repo/gradle_cobertura/gradle_cobertura/1.0/coberturainit.gradle'
+
+sourceCompatibility = 1.7
+
+sourceSets {
+  main {
+    scala {
+      srcDir 'RateBooks/src'
+      exclude 'driver/**'
+    }
+  }
+  test {
+        scala {
+            srcDir 'RateBooks/test'
+        }
+    }
+}
+
+dependencies{
+  compile fileTree(dir: 'RateBooks/lib', includes: ['*.jar'])
+    compile 'org.slf4j:slf4j-api:1.7.5'
+    compile 'org.scala-lang:scala-actors:2.10.+'
+    compile "org.scala-lang:scala-library:2.10.2"   
+    compile "org.scalatest:scalatest_2.10:2.+"
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+    //compile "org.scalatest:scalatest_2.10.2"
+  testCompile 'org.scalatest:scalatest_2.10:2.+'
+  //testCompile group: 'org.scalatest', name: 'scalatest_2.9.2', version: '1.9.1'
+}
+
+repositories{
+    mavenCentral()
+    mavenLocal()
+	mavenRepo url: "https://oss.sonatype.org/content/repositories/snapshots"
+}
+
+task runIterative << {
+    def prefix = System.getProperty("os.name").startsWith("Win") ? 'cmd /c ' : ''    
+    def append = System.getProperty("os.name").startsWith("Win") ? ';' : ':'
+    def cp = "./RateBooks/lib/AmazonAdvertisingAPI.jar${append}./RateBooks/lib/commons-codec-1.8.jar${append}."    
+    println "Compiling..."    
+    def compileLogicClass = "${prefix}scalac -classpath "+cp+" RateBooks/src/RateBooks.scala"
+    println compileLogicClass.execute().text
+    println("Running!!....")
+    def commandIterative = "${prefix}scala -classpath "+cp+" RateBooks/src/driver/RateBookDriver.scala"
+    println commandIterative.execute().text
+}
+
+cobertura {
+  coverageSourceDirs = sourceSets.main.scala.srcDirs
+  coverageExcludes = ['.*driver.*']
+}
+
+test {
+  jvmArgs '-noverify'
+}
+
+defaultTasks 'clean', 'cobertura', 'runIterative'
